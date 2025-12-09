@@ -1,15 +1,28 @@
 from models.atracciones_model import Atracciones
 from peewee import *
+from datetime import date
 
 class AtraccionesRepo:
     # --- Creación ---
     @staticmethod
-    def crear_atraccion(nombre, tipo=None, altura_minima=None, detalles_json=None):
+    def crear_atraccion(nombre, tipo=None, altura_minima=None, detalles_json=None, activa=True, fecha_inauguracion=None):
         return Atracciones.create(
             nombre=nombre,
             tipo=tipo,
             altura_minima=altura_minima,
-            detalles=detalles_json
+            detalles=detalles_json if detalles_json else {
+                "duracion_segundos": 0,
+                "capacidad_por_turno": 0,
+                "intensidad": 0,
+                "caracteristicas": [],
+                "horarios": {
+                    "apertura": "10:00",
+                    "cierre": "22:00",
+                    "mantenimiento": []
+                }
+            },
+            activa=activa,
+            fecha_inauguracion=fecha_inauguracion if fecha_inauguracion else date.today()
         )
 
     # --- Lectura ---

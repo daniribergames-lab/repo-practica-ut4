@@ -1,15 +1,22 @@
 from models.visitantes_model import Visitantes
 from models.tickets_model import Tickets
 from peewee import *
+from datetime import datetime
 
 class VisitantesRepo:
     # --- Creación ---
     @staticmethod
-    def crear_visitante(nombre, email=None, preferencias_json=None):
+    def crear_visitante(nombre, email=None, altura=None, fecha_registro=None, preferencias_json=None):
         return Visitantes.create(
             nombre=nombre,
             email=email,
-            preferencias=preferencias_json
+            altura=altura,
+            fecha_registro=fecha_registro if fecha_registro else datetime.now(),
+            preferencias=preferencias_json if preferencias_json else {
+                "tipo_favorito": "",
+                "restricciones": [],
+                "historial_visitas": []
+            }
         )
 
     # --- Lectura ---
@@ -31,7 +38,6 @@ class VisitantesRepo:
         try:
             visitante = Visitantes.get_or_none(Visitantes.id == visitante_id)
             if visitante:
-                # Eliminar tickets asociados
                 Tickets.delete().where(Tickets.visitante == visitante).execute()
                 visitante.delete_instance()
                 return True

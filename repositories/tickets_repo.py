@@ -7,7 +7,7 @@ from datetime import datetime
 class TicketsRepo:
     # --- Creación ---
     @staticmethod
-    def crear_ticket(visitante_id, fecha_visita=None, tipo_ticket=None, detalles_compra_json=None, atraccion_id=None):
+    def crear_ticket(visitante_id, fecha_compra=None, fecha_visita=None, tipo_ticket=None, detalles_compra_json=None, atraccion_id=None):
         visitante = Visitantes.get_or_none(Visitantes.id == visitante_id)
         atraccion = Atracciones.get_or_none(Atracciones.id == atraccion_id) if atraccion_id else None
         if not visitante:
@@ -15,9 +15,15 @@ class TicketsRepo:
         return Tickets.create(
             visitante=visitante,
             atraccion=atraccion,
+            fecha_compra=fecha_compra if fecha_compra else datetime.now(),
             fecha_visita=fecha_visita,
             tipo_ticket=tipo_ticket,
-            detalles_compra=detalles_compra_json
+            detalles_compra=detalles_compra_json if detalles_compra_json else {
+                "precio": 0.0,
+                "descuentos_aplicados": [],
+                "servicios_extra": [],
+                "metodo_pago": ""
+            }
         )
 
     # --- Lectura ---
