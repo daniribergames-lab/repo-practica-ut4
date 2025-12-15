@@ -60,3 +60,23 @@ class TicketsRepo:
             ticket.save()
             return ticket
         return None
+
+# --- Consultas ---
+    @staticmethod
+    def tickets_tipo_y_precio_menor_a(tipo, precio_maximo):
+        return list(
+            Tickets.select()
+            .where(
+                (Tickets.tipo_ticket == tipo) &
+                (Tickets.detalles_compra['precio'].cast('float') < precio_maximo)
+            )
+        )
+
+    @staticmethod
+    def tickets_con_descuento(descuento):
+        return list(
+            Tickets.select()
+            .where(
+                Tickets.detalles_compra['descuentos_aplicados'].contains([descuento])
+            )
+        )

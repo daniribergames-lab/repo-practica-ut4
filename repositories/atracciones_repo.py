@@ -60,3 +60,38 @@ class AtraccionesRepo:
         except Exception as e:
             print(f"Error eliminando atracción: {e}")
             return False
+
+# --- Consultas ---
+    @staticmethod
+    def atracciones_por_intensidad_mayor_a(intensidad_minima):
+        return list(
+            Atracciones.select()
+            .where(Atracciones.detalles['intensidad'].cast('int') > intensidad_minima)
+        )
+
+    @staticmethod
+    def atracciones_por_duracion_mayor_a(duracion_segundos):
+        return list(
+            Atracciones.select()
+            .where(Atracciones.detalles['duracion_segundos'].cast('int') > duracion_segundos)
+        )
+
+    @staticmethod
+    def atracciones_con_caracteristicas(caracteristica1, caracteristica2):
+        return list(
+            Atracciones.select()
+            .where(
+                Atracciones.detalles['caracteristicas'].contains([caracteristica1]) &
+                Atracciones.detalles['caracteristicas'].contains([caracteristica2])
+            )
+        )
+
+    @staticmethod
+    def atracciones_con_mantenimiento_programado():
+        from peewee import fn 
+        return list(
+            Atracciones.select()
+            .where(
+                fn.jsonb_array_length(Atracciones.detalles['horarios']['mantenimiento']) > 0
+            )
+        )

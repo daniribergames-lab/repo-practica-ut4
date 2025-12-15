@@ -45,3 +45,20 @@ class VisitantesRepo:
         except Exception as e:
             print(f"Error eliminando visitante: {e}")
             return False
+
+# --- Consultas ---
+    @staticmethod
+    def visitantes_preferencia_extrema():
+        return list(
+            Visitantes.select()
+            .where(Visitantes.preferencias['tipo_favorito'] == 'extrema')
+        )
+
+    @staticmethod
+    def visitantes_con_restriccion(restriccion):
+        return list(
+            Visitantes.select()
+            .where(
+                Visitantes.preferencias['restricciones'].contains([restriccion])
+            )
+        )
