@@ -1,6 +1,6 @@
-from models.tickets_model import Tickets
-from models.visitantes_model import Visitantes
-from models.atracciones_model import Atracciones
+from models.tickets import Tickets
+from models.visitantes import Visitantes
+from models.atracciones import Atracciones
 from peewee import *
 from datetime import datetime
 

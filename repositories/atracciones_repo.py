@@ -1,4 +1,4 @@
-from models.atracciones_model import Atracciones
+from models.atracciones import Atracciones
 from peewee import *
 from datetime import date
 
@@ -88,10 +88,12 @@ class AtraccionesRepo:
 
     @staticmethod
     def atracciones_con_mantenimiento_programado():
-        from peewee import fn 
+        from peewee import fn
         return list(
-            Atracciones.select()
-            .where(
-                fn.jsonb_array_length(Atracciones.detalles['horarios']['mantenimiento']) > 0
+            Atracciones.select().where(
+                fn.jsonb_array_length(
+                    Atracciones.detalles['horarios']['mantenimiento']
+                    .cast('jsonb')
+                ) > 0
             )
         )

@@ -1,5 +1,5 @@
-from models.visitantes_model import Visitantes
-from models.tickets_model import Tickets
+from models.visitantes import Visitantes
+from models.tickets import Tickets
 from peewee import *
 from datetime import datetime
 
