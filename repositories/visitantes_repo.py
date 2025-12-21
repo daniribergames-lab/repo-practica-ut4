@@ -1,7 +1,8 @@
 from models.visitantes import Visitantes
 from models.tickets import Tickets
 from peewee import *
-from datetime import datetime
+from datetime import datetime, date
+from playhouse.postgres_ext import *
 
 class VisitantesRepo:
     # --- Creación ---
@@ -60,5 +61,72 @@ class VisitantesRepo:
             Visitantes.select()
             .where(
                 Visitantes.preferencias['restricciones'].contains([restriccion])
+            )
+        )
+    
+    # --- JSONB ---
+    @staticmethod
+    def eliminar_restriccion(visitante_id, restriccion):
+        visitante = Visitantes.get_or_none(Visitantes.id == visitante_id)
+        if not visitante:
+            return 0
+
+        restricciones = visitante.preferencias.get("restricciones", [])
+        if restriccion not in restricciones:
+            return 0
+
+        nuevas = [r for r in restricciones if r != restriccion]
+        visitante.preferencias["restricciones"] = nuevas
+        return visitante.save()
+
+    @staticmethod
+    def agregar_visita_historial(visitante_id, fecha, atracciones_visitadas):
+        visitante = Visitantes.get_or_none(Visitantes.id == visitante_id)
+        if not visitante:
+            return 0
+
+        fecha_str = fecha.isoformat() if isinstance(fecha, date) else str(fecha)
+        historial = visitante.preferencias.get("historial_visitas", [])
+
+        nueva_visita = {
+            "fecha": fecha_str,
+            "atracciones_visitadas": atracciones_visitadas
+        }
+
+        historial.append(nueva_visita)
+        visitante.preferencias["historial_visitas"] = historial
+
+        return visitante.save()
+    
+    # --- CONSULTAS ÚTILES ---
+    @staticmethod
+    def visitantes_ordenados_por_tickets():
+        return (
+            Visitantes
+            .select(
+                Visitantes,
+                fn.COUNT(Tickets.id).alias('total_tickets')
+            )
+            .join(Tickets, JOIN.LEFT_OUTER)
+            .group_by(Visitantes.id)
+            .order_by(fn.COUNT(Tickets.id).desc())
+        )
+
+    @staticmethod
+    def visitantes_gasto_mayor_a(cantidad):
+        return (
+            Visitantes
+            .select(
+                Visitantes,
+                fn.SUM(
+                    Tickets.detalles_compra['precio'].cast('float')
+                ).alias('total_gastado')
+            )
+            .join(Tickets)
+            .group_by(Visitantes.id)
+            .having(
+                fn.SUM(
+                    Tickets.detalles_compra['precio'].cast('float')
+                ) > cantidad
             )
         )

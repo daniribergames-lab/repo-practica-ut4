@@ -8,20 +8,19 @@ from models.tickets import Tickets
 from peewee import IntegrityError
 from datetime import datetime, date
 
+# --- CONSTANTES ---
 TIPOS_ATRACCION_VALIDOS = ["extrema", "familiar", "infantil", "acuatica"]
 TIPOS_TICKET_VALIDOS = ["general", "colegio", "empleado"]
 METODOS_PAGO_VALIDOS = ["tarjeta", "efectivo", "bizum"]
 RESTRICCIONES_VALIDAS = ["problemas cardiacos", "vertigo", "embarazo"]
 CARACTERISTICAS_VALIDAS = ["looping", "caida libre", "giro 360"]
 
-# ------------------ INIT DB ------------------
-
+# --- INIT DB ---
 def init_db():
     inicializar_base([Visitantes, Atracciones, Tickets])
     print("Base de datos inicializada correctamente.")
 
-# ------------------ CREAR ------------------
-
+# --- CREAR ---
 def menu_crear():
     while True:
         print("\n--- CREAR ---")
@@ -229,8 +228,7 @@ def menu_crear():
         else:
             print("Opción no válida.")
 
-# ------------------ LEER ------------------
-
+# --- LEER ---
 def menu_leer():
     while True:
         print("\n--- LEER ---")
@@ -282,8 +280,7 @@ def menu_leer():
         else:
             print("Opción no válida.")
 
-# ------------------ ACTUALIZAR ------------------
-
+# --- ACTUALIZAR ---
 def menu_actualizar():
     while True:
         print("\n--- ACTUALIZAR ---")
@@ -310,8 +307,7 @@ def menu_actualizar():
         else:
             print("Opción no válida.")
 
-# ------------------ ELIMINAR ------------------
-
+# --- ELIMINAR ---
 def menu_eliminar():
     while True:
         print("\n--- ELIMINAR ---")
@@ -335,12 +331,10 @@ def menu_eliminar():
         else:
             print("Opción no válida.")
 
-# ------------------ CONSULTAS ------------------
-
+# --- CONSULTAS ---
 def ejecutar_consultas():
-    """Implementa el menú interactivo para las 8 consultas de 2.5 puntos."""
     while True:
-        print("\n--- MENÚ DE CONSULTAS (2.5 PUNTOS) ---")
+        print("\n--- MENÚ DE CONSULTAS ---")
         print("1. Visitantes con preferencia 'extrema'")
         print("2. Atracciones con intensidad mayor a 7")
         print("3. Tickets 'colegio' con precio < 30€")
@@ -435,8 +429,96 @@ def ejecutar_consultas():
         else:
             print("Opción no válida. Intente de nuevo.")
 
-# ------------------ MENÚ PRINCIPAL ------------------
+# --- MODIFICACIONES JSONB ---
+def modificaciones_jsonb():
+    while True:
+        print("\n--- MODIFICACIONES JSONB ---")
+        print("1. Cambiar precio de un ticket")
+        print("2. Eliminar restricción a visitante")
+        print("3. Añadir característica a atracción")
+        print("4. Añadir visita al historial del visitante")
+        print("0. Volver")
 
+        op = input("Opción: ")
+
+        if op == '1':
+            tid = int(input("ID ticket: "))
+            precio = float(input("Nuevo precio: "))
+            TicketsRepo.cambiar_precio_ticket(tid, precio)
+            print("Precio actualizado.")
+
+        elif op == '2':
+            vid = int(input("ID visitante: "))
+            r = input("Restricción a eliminar: ")
+            VisitantesRepo.eliminar_restriccion(vid, r)
+            print("Restricción eliminada.")
+
+        elif op == '3':
+            aid = int(input("ID atracción: "))
+            c = input("Nueva característica: ")
+            AtraccionesRepo.agregar_caracteristica(aid, c)
+            print("Característica añadida.")
+
+        elif op == '4':
+            vid = int(input("ID visitante: "))
+
+            while True:
+                fecha_input = input("Fecha (YYYY-MM-DD): ").strip()
+                if not fecha_input:
+                    print("La fecha es obligatoria.")
+                    continue
+
+                try:
+                    fecha_visita = datetime.strptime(fecha_input, "%Y-%m-%d").date()
+                    if fecha_visita < date.today():
+                        print("La fecha no puede ser anterior a hoy.")
+                        continue
+                    break
+                except ValueError:
+                    print("Formato incorrecto. Use YYYY-MM-DD.")
+
+            cantidad = int(input("Cantidad de atracciones visitadas: "))
+            
+            VisitantesRepo.agregar_visita_historial(vid, fecha_visita, cantidad)
+            print("Visita añadida.")
+
+        elif op == '0':
+            break
+
+# --- CONSULTAS UTILES ---
+def consultas_utiles():
+    while True:
+        print("\n--- CONSULTAS ÚTILES ---")
+        print("1. Visitantes ordenados por nº de tickets")
+        print("2. Top 5 atracciones más vendidas")
+        print("3. Visitantes que han gastado más de 100€")
+        print("4. Atracciones compatibles para un visitante")
+        print("0. Volver")
+
+        op = input("Opción: ")
+
+        if op == '1':
+            for v in VisitantesRepo.visitantes_ordenados_por_tickets():
+                print(v.nombre, v.total_tickets)
+
+        elif op == '2':
+            for a in AtraccionesRepo.top_5_atracciones_mas_vendidas():
+                print(a.nombre, a.ventas)
+
+        elif op == '3':
+            for v in VisitantesRepo.visitantes_gasto_mayor_a(100):
+                print(v.nombre, v.total_gastado)
+
+        elif op == '4':
+            vid = int(input("ID visitante: "))
+            for a in AtraccionesRepo.atracciones_compatibles_para_visitante(vid):
+                print(a.nombre)
+
+        elif op == '0':
+            break
+
+
+# --- MENÚ PRINCIPAL ---
 def menu_principal():
     while True:
         print("\n=== MENÚ PRINCIPAL ===")
@@ -445,6 +527,8 @@ def menu_principal():
         print("3. Actualizar")
         print("4. Eliminar")
         print("5. Consultas")
+        print("6. Modificaciones jsonb")
+        print("7. Consultas utiles")
         print("0. Salir")
 
         op = input("Opción: ")
@@ -459,13 +543,17 @@ def menu_principal():
             menu_eliminar()
         elif op == '5':
             ejecutar_consultas()
+        elif op == '6':
+            modificaciones_jsonb()
+        elif op == '7':
+            consultas_utiles()
         elif op == '0':
             print("Saliendo del sistema.")
             break
         else:
             print("Opción no válida.")
 
-# ------------------ MAIN ------------------
+# --- MAIN ---
 
 if __name__ == "__main__":
     init_db()

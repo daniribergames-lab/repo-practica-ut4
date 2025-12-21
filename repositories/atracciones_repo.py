@@ -1,6 +1,9 @@
 from models.atracciones import Atracciones
+from models.visitantes import Visitantes
+from models.tickets import Tickets
 from peewee import *
 from datetime import date
+from playhouse.postgres_ext import *
 
 class AtraccionesRepo:
     # --- Creación ---
@@ -96,4 +99,49 @@ class AtraccionesRepo:
                     .cast('jsonb')
                 ) > 0
             )
+        )
+
+    # --- JSONB ---
+    @staticmethod
+    def agregar_caracteristica(atraccion_id, caracteristica):
+        atraccion = Atracciones.get_or_none(Atracciones.id == atraccion_id)
+        if not atraccion:
+            return 0
+
+        caracteristicas = atraccion.detalles.get('caracteristicas', [])
+        if caracteristica in caracteristicas:
+            return 0
+
+        caracteristicas.append(caracteristica)
+        atraccion.detalles['caracteristicas'] = caracteristicas
+        return atraccion.save()
+    
+    # --- CONSULTAS ÚTILES ---
+    @staticmethod
+    def top_5_atracciones_mas_vendidas():
+        return (
+            Atracciones
+            .select(
+                Atracciones,
+                fn.COUNT(Tickets.id).alias('ventas')
+            )
+            .join(Tickets)
+            .where(Tickets.atraccion.is_null(False))
+            .group_by(Atracciones.id)
+            .order_by(fn.COUNT(Tickets.id).desc())
+            .limit(5)
+        )
+
+    @staticmethod
+    def atracciones_compatibles_para_visitante(visitante_id):
+        visitante = Visitantes.get_or_none(Visitantes.id == visitante_id)
+        if not visitante:
+            return []
+
+        tipo = visitante.preferencias.get('tipo_favorito')
+
+        return Atracciones.select().where(
+            (Atracciones.activa == True) &
+            (Atracciones.tipo == tipo) &
+            (Atracciones.altura_minima <= visitante.altura)
         )

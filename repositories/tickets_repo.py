@@ -61,7 +61,7 @@ class TicketsRepo:
             return ticket
         return None
 
-# --- Consultas ---
+    # --- Consultas ---
     @staticmethod
     def tickets_tipo_y_precio_menor_a(tipo, precio_maximo):
         return list(
@@ -80,3 +80,14 @@ class TicketsRepo:
                 Tickets.detalles_compra['descuentos_aplicados'].contains([descuento])
             )
         )
+    
+    # --- JSONB ---
+    @staticmethod
+    def cambiar_precio_ticket(ticket_id, nuevo_precio):
+        return Tickets.update(
+            detalles_compra=fn.jsonb_set(
+                Tickets.detalles_compra,
+                '{precio}',
+                fn.to_jsonb(Value(nuevo_precio))
+            )
+        ).where(Tickets.id == ticket_id).execute()
